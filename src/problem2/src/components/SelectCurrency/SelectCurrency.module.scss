@@ -1,0 +1,48 @@
+.item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px 8px;
+
+    &:hover {
+        background-color: #00000033;
+    }
+}
+
+.controller {
+    // min-width: 60px;
+    padding: 4px;
+    background: #00000050;
+    cursor: pointer;
+    border-radius: 4px;
+    .item {
+        padding: 4px 8px;
+
+        &:hover {
+            background-color: unset;
+        }
+    }
+}
+
+.dropdown {
+    max-height: min(200px, 80vh);
+    overflow: overlay;
+    background: #2c3e50 !important;
+    scroll-margin: 8px;
+    scroll-behavior: smooth;
+    scroll-padding-top: 4px;
+    scroll-padding-bottom: 4px;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+        // height: 2px;
+        // background: red;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #34495e;
+        border-radius: 4px;
+    }
+}
