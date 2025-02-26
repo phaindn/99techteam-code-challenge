@@ -1,0 +1,1 @@
+export type SetTimeoutValue = ReturnType<typeof setTimeout> | number;
