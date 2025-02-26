@@ -11,67 +11,77 @@ interface FormattedWalletBalance {
 interface Props extends BoxProps {
 
 }
+
+// this utilize function should be moved to a separated file
+const getPriority = (blockchain: any): number => {
+  switch (blockchain) {
+    case 'Osmosis':
+      return 100
+    case 'Ethereum':
+      return 50
+    case 'Arbitrum':
+      return 30
+    case 'Zilliqa':
+      return 20
+    case 'Neo':
+      return 20
+    default:
+      return -99
+  }
+}
+
+
 const WalletPage: React.FC<Props> = (props: Props) => {
   const { children, ...rest } = props;
   const balances = useWalletBalances();
   const prices = usePrices();
 
-  const getPriority = (blockchain: any): number => {
-    switch (blockchain) {
-      case 'Osmosis':
-        return 100
-      case 'Ethereum':
-        return 50
-      case 'Arbitrum':
-        return 30
-      case 'Zilliqa':
-        return 20
-      case 'Neo':
-        return 20
-      default:
-        return -99
-    }
-  }
+  /**
+   * if we're using redux, we can use createSelector from 'reselect' to create a selector which return sorted balances directly
+   */
 
   const sortedBalances = useMemo(() => {
     return balances.filter((balance: WalletBalance) => {
       const balancePriority = getPriority(balance.blockchain);
-      if (lhsPriority > -99) {
-        if (balance.amount <= 0) {
-          return true;
-        }
-      }
-      return false
+      // shorten the condition
+      return (balancePriority > -99) && (balance.amount <= 0);
     }).sort((lhs: WalletBalance, rhs: WalletBalance) => {
       const leftPriority = getPriority(lhs.blockchain);
       const rightPriority = getPriority(rhs.blockchain);
-      if (leftPriority > rightPriority) {
-        return -1;
-      } else if (rightPriority > leftPriority) {
-        return 1;
-      }
+      // we can reduce calculation complexity by directly return the value of (leftPriority - rightPriority)
+      // => reduced 2 conditions
+      return leftPriority - rightPriority;
     });
-  }, [balances, prices]);
+    // remove unused prices variable from dependencies to avoid unattened calculation => improve performance
+  }, [balances]);
 
-  const formattedBalances = sortedBalances.map((balance: WalletBalance) => {
-    return {
-      ...balance,
-      formatted: balance.amount.toFixed()
-    }
-  })
+  /**
+   * formattedBalances is not neccessary since we only want to add a property name `formatted` then use it to render row
+   * so I removed it and move formatted property to the row creation map
+   * => reduce memory usage
+   */
 
-  const rows = sortedBalances.map((balance: FormattedWalletBalance, index: number) => {
-    const usdValue = prices[balance.currency] * balance.amount;
-    return (
-      <WalletRow
-        className={classes.row}
-        key={index}
-        amount={balance.amount}
-        usdValue={usdValue}
-        formattedAmount={balance.formatted}
-      />
-    )
-  })
+  /**
+   * since rows only depend on sortedBalances and prices, we can limit the calculation by memorizing rows with those two dependencies
+   * => it reduce the number of re-render when there's change.
+   * For example: when balances changed, React will compute sortedBalances and since rows didn't memoized, it will be re-compute 2 times.
+   * -> when we memoized it with [sortedBalances, prices], when balances changes, rows only be compute once when sortedBalances is calculated.
+   */
+  const rows = useMemo(() => {
+    return sortedBalances.map((balance: FormattedWalletBalance, index: number) => {
+      const usdValue = prices[balance.currency] * balance.amount;
+      balance.formatted = balance.amount.toFixed()
+      return (
+        <WalletRow
+          className={classes.row}
+          key={index}
+          amount={balance.amount}
+          usdValue={usdValue}
+          formattedAmount={balance.formatted}
+        />
+      )
+    })
+  }, [sortedBalances, prices]);
 
   return (
     <div {...rest}>
