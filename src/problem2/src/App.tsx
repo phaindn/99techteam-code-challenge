@@ -1,22 +1,23 @@
-import { useState } from 'react';
-import s from './App.module.css'
+import { useEffect } from 'react';
+import s from './App.module.scss'
+import { getTokensPrice } from './services/api';
+import { tokenActions } from './store/reducers/tokens';
+import { useDispatch } from 'react-redux';
+import SwapForm from './components/SwapForm/SwapForm';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    getTokensPrice().then(res => {
+      dispatch(tokenActions.addItems(res.data));
+    });
+  }, [dispatch]);
 
   return (
-    <>
-      <form onsubmit="return !1">
-        <h5>Swap</h5>
-        <label for="input-amount">Amount to send</label>
-        <input id="input-amount" />
-
-        <label for="output-amount">Amount to receive</label>
-        <input id="output-amount" />
-
-        <button>CONFIRM SWAP</button>
-      </form>
-    </>
+    <main className={s.main}>
+      <SwapForm />
+    </main>
   )
 }
 
